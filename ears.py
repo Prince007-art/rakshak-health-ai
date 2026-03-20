@@ -19,7 +19,7 @@ if 'medical_history' not in st.session_state:
 API_KEY = "AIzaSyCOdLiQv2Yp6oUxhEAWxqgb53mCbvDDqgs" 
 genai.configure(api_key=API_KEY)
 # CORRECTED: Changed to the active model version
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Helper function to save history
 def save_diagnosis(urgency, symptoms, ai_response):
