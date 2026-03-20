@@ -16,7 +16,7 @@ if 'medical_history' not in st.session_state:
 
 # --- 3. THE BRAIN SETUP (Raksha AI) ---
 # ⚠️ REMINDER: Move this to st.secrets before making it public for safety!
-API_KEY = "AIzaSyBf28WvJT7Kk7qKwEvVqVXoHSEJhMlIWu0" 
+API_KEY = "AIzaSyBdCWfhzTx-qqS2AQatrMmA01FJAD1Uffo" 
 genai.configure(api_key=API_KEY)
 # CORRECTED: Changed to the active model version
 model = genai.GenerativeModel('gemini-2.5-flash')
