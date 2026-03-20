@@ -22,7 +22,7 @@ if 'medical_history' not in st.session_state:
 # # --- 3. THE BRAIN SETUP (Raksha AI) ---
 try:
     # Looks for the LABEL "API_KEY" in Streamlit Secrets
-    API_KEY = st.secrets["AIzaSyD8dCX8Ff1JDGnuuv9kAny8RFRtTYJGp3U"]
+    API_KEY = st.secrets["API_KEY"]
     genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception as e:
