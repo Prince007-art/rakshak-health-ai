@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 # # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Rakshak - Global Health AI", page_icon="🌍", layout="centered")
 
+# Disclaimer always at the top for safety
 st.caption("⚠️ DISCLAIMER: Rakshak is an AI triage tool for informational purposes only. "
            "It is NOT a medical diagnosis. In an emergency, call 102 (Ambulance) immediately.")
 
@@ -20,16 +21,14 @@ if 'medical_history' not in st.session_state:
     st.session_state['medical_history'] = []
 
 # # --- 3. THE BRAIN SETUP (Raksha AI) ---
-# SECURE WAY: Use the name "API_KEY" here. Set the actual value in Streamlit Secrets dashboard.
 try:
-    # This looks for the LABEL "API_KEY" in your Streamlit Secrets dashboard
+    # We look for the LABEL "API_KEY" from your Streamlit Secrets
     API_KEY = st.secrets["API_KEY"]
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception as e:
-    st.error("Secret 'API_KEY' not found in Streamlit Dashboard.")
-    st.stop()  
-
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-2.5-flash') # Using the stable flash model
+    st.error("🚨 Configuration Error: Please check your API Key in Streamlit Secrets.")
+    st.stop()
 
 def save_diagnosis(urgency, symptoms, ai_response):
     entry = {
@@ -44,144 +43,135 @@ def save_diagnosis(urgency, symptoms, ai_response):
 if not st.session_state['logged_in']:
     st.title("🌍 Welcome to Rakshak")
     
-    st.markdown("### Meet Your AI Health Guardian")
+    st.markdown("### Your AI Health Guardian is Ready")
+    
+    # NEW: Using a more stable, public 3D Avatar link
     components.html(
         """
-        <iframe src='https://my.spline.design/robot-0b4cc5da82c5f7d391f1b29a2ee6f443/' frameborder='0' width='100%' height='300px'></iframe>
+        <iframe src='https://my.spline.design/clonemorphicheads-79693761358309f44f94025a4d6e901a/' frameborder='0' width='100%' height='300px'></iframe>
         """, height=300
     )
     
-    st.write("Please sign in to securely save your history.")
+    st.write("Securely sign in to keep track of your health journey.")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🌐 Continue with Google (Mock)", use_container_width=True):
-            st.session_state['user_profile']['name'] = "Guest User"
+    # Real-looking Login Buttons
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("🌐 Continue with Google", use_container_width=True):
+            st.session_state['user_profile']['name'] = "Google User"
             st.session_state['logged_in'] = True
             st.rerun()
-    with col2:
-        st.button("📘 Continue with Facebook (Mock)", use_container_width=True)
+    with c2:
+        if st.button("📘 Continue with Facebook", use_container_width=True):
+            st.session_state['user_profile']['name'] = "FB User"
+            st.session_state['logged_in'] = True
+            st.rerun()
         
     st.divider()
-    st.subheader("Guest / Quick Setup")
+    st.subheader("Or Quick Guest Access")
     with st.form("signup_form"):
-        name = st.text_input("Full Name")
-        pref_lang = st.selectbox("Preferred Language", ["English", "हिन्दी (Hindi)", "Bhojpuri (भोजपुरी)"])
-        location_input = st.text_input("City/Location:", placeholder="e.g., Patna, India")
-        submit = st.form_submit_button("Start Using Rakshak")
+        name = st.text_input("What should Raksha call you?")
+        pref_lang = st.selectbox("Language", ["English", "हिन्दी (Hindi)", "Bhojpuri (भोजपुरी)"])
+        location_input = st.text_input("Your City:", value="Patna, India")
+        submit = st.form_submit_button("Launch Rakshak 🚀")
         
         if submit and name:
             st.session_state['user_profile']['name'] = name
             st.session_state['user_profile']['language'] = pref_lang
-            st.session_state['user_profile']['location'] = location_input if location_input else "Global"
+            st.session_state['user_profile']['location'] = location_input
             st.session_state['logged_in'] = True
             st.rerun()
 
 # # --- 5. MAIN APP INTERFACE ---
 else:
-    tab_home, tab_history, tab_profile = st.tabs(["🏠 Home & Triage", "📜 My History", "👤 My Profile"])
+    tab_home, tab_history, tab_profile = st.tabs(["🏠 Health Triage", "📜 History", "👤 Profile"])
     
     user_lang = st.session_state['user_profile']['language']
     user_loc = st.session_state['user_profile']['location']
     
     with tab_home:
-        st.title(f"Raksha is listening, {st.session_state['user_profile']['name']}.")
+        st.title(f"Hello, {st.session_state['user_profile']['name']}!")
         
-        # 🌟 UPDATED: Professional Input Methods
-        input_method = st.radio("Add details via:", ["📝 Text & Reports", "📸 Quick Photo"], horizontal=True)
-        user_text = ""
-        user_image = None
-        uploaded_report = None
+        # 🌟 FEATURE: Professional Multi-Input
+        st.markdown("#### Describe your symptoms or upload a report")
+        user_text = st.text_area("How are you feeling?", height=100, placeholder="E.g. I have a sharp pain in my lower back...")
         
-        if input_method == "📝 Text & Reports":
-            user_text = st.text_area("Describe symptoms/concerns:", placeholder="Example: I've had a cough for 3 days and feel feverish.")
-            uploaded_report = st.file_uploader("📂 Upload Medical Report (PDF or Image)", type=['pdf', 'jpg', 'png', 'jpeg'])
-        elif input_method == "📸 Quick Photo":
-            user_image = st.camera_input("Take a photo of the symptom or medicine")
-            user_text = st.text_input("Briefly describe what we're looking at:")
+        col_cam, col_file = st.columns(2)
+        with col_cam:
+            user_image = st.camera_input("📸 Scan Symptom")
+        with col_file:
+            uploaded_file = st.file_uploader("📂 Upload Doctor Report/Lab Result", type=['pdf', 'jpg', 'png', 'jpeg'])
 
-        if st.button("🩺 Ask Raksha", type="primary"):
-            if not (user_text or user_image or uploaded_report):
-                st.warning("Please provide some information for Raksha to analyze.")
+        if st.button("🩺 Ask Raksha AI", type="primary", use_container_width=True):
+            if not (user_text or user_image or uploaded_file):
+                st.warning("Please provide some info so Raksha can help.")
             else:
                 try:  
-                    with st.spinner("Raksha is analyzing..."):
+                    with st.spinner("Raksha is analyzing your data..."):
                         prompt = f"""
-                        You are Raksha, an advanced medical triage AI. Respond in {user_lang}. 
-                        Current location: {user_loc}.
+                        Act as Raksha, a professional medical triage AI. Respond in {user_lang}.
+                        Current Location: {user_loc}.
                         
-                        Format your response using Markdown bullet points:
-                        **URGENCY:** [RED, YELLOW, or GREEN]
-                        
-                        **📝 SUMMARY:**
-                        * [Bullet points]
-                        
-                        **⚕️ IMMEDIATE STEPS:**
-                        * [Bullet points]
-                        
-                        **🏥 RECOMMENDED SPECIALIST:**
-                        * [Doctor type]
-                        
-                        **💊 ADVICE:**
-                        * [Actionable advice]
+                        Give the answer in clear BULLET POINTS.
+                        FORMAT:
+                        **URGENCY:** [RED/YELLOW/GREEN]
+                        **📝 SYMPTOMS SUMMARY:** [Bullet points]
+                        **⚕️ ACTION STEPS:** [Bullet points]
+                        **🏥 SPECIALIST NEEDED:** [Doctor type]
+                        **💊 HOME ADVICE:** [Bullet points]
                         """
                         
-                        # Prepare data for AI
-                        content_list = [prompt, f"User Input: {user_text}"]
-                        if user_image: content_list.append(user_image)
-                        if uploaded_report: content_list.append(uploaded_report)
+                        inputs = [prompt, f"User notes: {user_text}"]
+                        if user_image: inputs.append(user_image)
+                        if uploaded_file: inputs.append(uploaded_file)
                         
-                        response = model.generate_content(content_list)
-                        ai_response_text = response.text
+                        response = model.generate_content(inputs)
+                        ai_text = response.text
                         
-                        st.divider()
-                        
-                        # 🌟 FIXED: Accurate Regex for Urgency
-                        match = re.search(r'URGENCY:\s*\**([A-Za-z]+)', ai_response_text, re.IGNORECASE)
+                        # The Regex Fix for the Color Bug
+                        match = re.search(r'URGENCY:\s*\**([A-Za-z]+)', ai_text, re.IGNORECASE)
                         urgency = "GREEN"
                         if match:
                             word = match.group(1).upper()
                             if "RED" in word: urgency = "RED"
                             elif "YELLOW" in word: urgency = "YELLOW"
                         
+                        st.divider()
                         if urgency == "RED":
-                            st.error(ai_response_text)
-                            st.error("🚨 EMERGENCY: Please visit a hospital immediately.")
+                            st.error(ai_text)
+                            st.error("🚨 HIGH URGENCY: Consult a doctor immediately.")
                         elif urgency == "YELLOW":
-                            st.warning(ai_response_text)
+                            st.warning(ai_text)
                         else:
-                            st.success(ai_response_text)
+                            st.success(ai_text)
                         
-                        save_diagnosis(urgency, user_text if user_text else "File Upload", ai_response_text)
+                        save_diagnosis(urgency, user_text if user_text else "Media/File Upload", ai_text)
                         
-                        st.markdown("### 🏥 Next Steps")
+                        # Action Buttons
+                        st.markdown("---")
                         c1, c2 = st.columns(2)
                         with c1:
-                            share_text = urllib.parse.quote(f"Health Alert for {st.session_state['user_profile']['name']}: {urgency}")
-                            st.link_button("🔗 Share via WhatsApp", f"https://wa.me/?text={share_text}")
+                            st.link_button("🔗 Share Report to WhatsApp", f"https://wa.me/?text=Rakshak%20Alert:%20{urgency}")
                         with c2:
-                            if urgency in ["RED", "YELLOW"]:
-                                st.link_button("🩺 Online Consultation", "https://apollo247.com", type="primary")
-                            else:
-                                st.link_button("💊 Order Medicine", "https://1mg.com")
+                            link = "https://1mg.com" if urgency == "GREEN" else "https://apollo247.com"
+                            st.link_button("🏥 Get Professional Help", link)
 
                 except Exception as e:
                     st.error(f"Error: {e}")
 
     with tab_history:
-        st.title("📜 Medical History")
+        st.header("Your Health Records")
         if not st.session_state['medical_history']:
-            st.info("No records yet.")
+            st.info("Your medical history will appear here.")
         else:
-            for entry in st.session_state['medical_history']:
-                with st.expander(f"{entry['date']} | {entry['urgency']}"):
-                    st.write(f"**Brief:** {entry['symptoms']}")
-                    st.write(entry['full_report'])
+            for item in st.session_state['medical_history']:
+                with st.expander(f"{item['date']} | {item['urgency']}"):
+                    st.markdown(item['full_report'])
 
     with tab_profile:
-        st.title("👤 My Profile")
-        st.write(f"**User:** {st.session_state['user_profile']['name']}")
-        st.write(f"**Language:** {st.session_state['user_profile']['language']}")
-        if st.button("🚪 Sign Out"):
+        st.header("Profile Settings")
+        st.write(f"**Name:** {st.session_state['user_profile']['name']}")
+        st.write(f"**Default Location:** {st.session_state['user_profile']['location']}")
+        if st.button("🚪 Logout"):
             st.session_state['logged_in'] = False
-            st.rerun() 
+            st.rerun()
