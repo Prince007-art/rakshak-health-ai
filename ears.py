@@ -22,9 +22,11 @@ if 'medical_history' not in st.session_state:
 # # --- 3. THE BRAIN SETUP (Raksha AI) ---
 # SECURE WAY: Use the name "API_KEY" here. Set the actual value in Streamlit Secrets dashboard.
 try:
-    API_KEY = st.secrets["AIzaSyBdCWfhzTx-qqS2AQatrMmA01FJAD1Uffo"]
-except:
-    API_KEY = "PASTE_KEY_ONLY_FOR_OFFLINE_TESTING" 
+    # This looks for the LABEL "API_KEY" in your Streamlit Secrets dashboard
+    API_KEY = st.secrets["API_KEY"]
+except Exception as e:
+    st.error("Secret 'API_KEY' not found in Streamlit Dashboard.")
+    st.stop()  
 
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash') # Using the stable flash model
