@@ -24,7 +24,7 @@ try:
     API_KEY = st.secrets["API_KEY"]
     genai.configure(api_key=API_KEY)
     # Corrected model version
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception:
     st.error("🚨 API Key Missing! Go to Streamlit Secrets and add 'API_KEY'.")
     st.stop()
