@@ -15,10 +15,11 @@ if 'medical_history' not in st.session_state:
     st.session_state['medical_history'] = []
 
 # --- 3. THE BRAIN SETUP (Raksha AI) ---
-# ⚠️ MAKE SURE YOU PUT YOUR KEY HERE WHEN READY TO GO LIVE!
+# ⚠️ REMINDER: Move this to st.secrets before making it public for safety!
 API_KEY = "AIzaSyCOdLiQv2Yp6oUxhEAWxqgb53mCbvDDqgs" 
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-2.5-flash')
+# CORRECTED: Changed to the active model version
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Helper function to save history
 def save_diagnosis(urgency, symptoms, ai_response):
@@ -116,7 +117,7 @@ else:
             elif API_KEY == "YOUR_API_KEY_HERE":
                 st.error("Please add your API Key to the code first!")
             else:
-                try:  # <--- Start of the 'Try' block
+                try:  
                     with st.spinner("Raksha is analyzing your symptoms globally..."):
                         prompt = f"""
                         You are Raksha, an advanced global medical triage AI. 
@@ -150,33 +151,35 @@ else:
                         if "RED" in ai_response_text.upper():
                             st.error(ai_response_text)
                             st.error("🚨 This looks serious.")
-                            st.link_button("📞 Talk to a Doctor Now (Partner Link)", "https://partner-telehealth-link.com")
                             urgency = "RED"
                         elif "YELLOW" in ai_response_text.upper():
                             st.warning(ai_response_text)
                             urgency = "YELLOW"
                         else:
                             st.success(ai_response_text)
+                            urgency = "GREEN"
                         
-                        # Save to history & generate share options
+                        # Save to history
                         save_diagnosis(urgency, user_text if user_text else "Media Input", ai_response_text)
                         
-                        # Action Buttons: Share & Download
-                        st.markdown("### Actions")
-                        col_share, col_dl = st.columns(2)
-                        
+                        # CORRECTED: Monetization & Actions block is now properly indented inside the try block
+                        st.caption("⚠️ DISCLAIMER: Rakshak is an AI triage tool for informational purposes only. "
+                                   "It is NOT a medical diagnosis. In an emergency, call 102 (Ambulance) immediately.")
+
+                        st.markdown("### 🏥 Next Steps for Your Health")
+                        col_share, col_action = st.columns(2)
+
                         with col_share:
-                            share_text = urllib.parse.quote(f"Rakshak Health Report for {st.session_state['user_profile']['name']}: {urgency} Alert.")
-                            st.link_button("🔗 Share Report (WhatsApp, SMS)", f"https://wa.me/?text={share_text}")
-                            
-                        with col_dl:
-                            report_content = f"RAKSHAK GLOBAL HEALTH REPORT\nName: {st.session_state['user_profile']['name']}\nLocation: {user_loc}\nDate: {datetime.datetime.now()}\n\n{ai_response_text}"
-                            st.download_button(
-                                label="📄 Download Official Report (TXT)",
-                                data=report_content,
-                                file_name="Rakshak_Medical_Report.txt",
-                                mime="text/plain"
-                            )
+                            share_text = urllib.parse.quote(f"Rakshak Health Alert for {st.session_state['user_profile']['name']}: {urgency} Alert.")
+                            st.link_button("🔗 Share Report via WhatsApp", f"https://wa.me/?text={share_text}")
+
+                        with col_action:
+                            if urgency == "RED" or urgency == "YELLOW":
+                                doctor_link = "https://your-affiliate-link-to-apollo-or-practo.com"
+                                st.link_button("🩺 Consult a Doctor (₹149 onwards)", doctor_link, type="primary")
+                            else:
+                                store_link = "https://your-affiliate-link-to-tata1mg.com"
+                                st.link_button("💊 Order Essentials (1mg)", store_link)
 
                 except Exception as e:
                     st.error(f"Raksha encountered an error: {e}")
@@ -226,4 +229,4 @@ else:
         st.subheader("Danger Zone")
         if st.button("🚪 Sign Out", type="primary"):
             st.session_state['logged_in'] = False
-            st.rerun()
+            st.rerun() 
