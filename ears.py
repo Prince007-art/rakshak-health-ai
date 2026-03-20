@@ -27,7 +27,7 @@ except:
     API_KEY = "PASTE_KEY_ONLY_FOR_OFFLINE_TESTING" 
 
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash') # Using the stable flash model
+model = genai.GenerativeModel('gemini-2.5-flash') # Using the stable flash model
 
 def save_diagnosis(urgency, symptoms, ai_response):
     entry = {
